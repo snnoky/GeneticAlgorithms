@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
+using System.Linq;
+using System.Net.Sockets;
 using System.Runtime.Intrinsics.Arm;
 
 namespace Zad4MIW
@@ -8,7 +11,6 @@ namespace Zad4MIW
     {
         static void Main(string[] args)
         {
-            
 
             Console.WriteLine("Wybierz zadanie: 1/2/3");
             var currentProgram = Console.ReadLine();
@@ -68,57 +70,105 @@ namespace Zad4MIW
                     osobniki.Add(os);
                 }
 
-                WypiszOsobniki(osobniki);
-
-                //for (int i = 0; i < osobniki.Count; i++)
-                //{
-                //    var cb = new List<int>();
-                //    for (int j = 0; j < osobniki[i].Chromosomy.Count; j++)
-                //    {
-                //        for (int k = 0; k < liczbaLbnp; k++)
-                //        {
-                //            cb.Add(osobniki[i].Chromosomy[k]);
-                //        }
-
-                //        for (int k = 0; k < liczbaParametrow; k++)
-                //        {
-                //            osobniki[i].Parametry.Add(DekodujParametry(cb,-1,2,liczbaLbnp));
-                //        }
-                //    }
-                //}
-
+                //WypiszOsobniki(osobniki);
 
                 //Tworzenie parametrów
 
-                var counter = 0;
-                for (int i = 0; i < osobniki.Count; i++)
-                {
-                    for (int j = 0; j < liczbaParametrow; j++)
-                    {
-                        var cb = new List<int>();
-                        for (int k = 0; k < liczbaLbnp; k++)
-                        {
-                            cb.Add(osobniki[i].Chromosomy[counter]);
-                            counter++;
-                        }
-                        osobniki[i].Parametry.Add(DekodujParametry(cb, -1, 2, liczbaLbnp));
-                    }
-                    counter = 0;
-                }
+
+                TworzParametry(osobniki,liczbaParametrow,-1,2,liczbaLbnp);
+
+                //var counter = 0;
+                //for (int i = 0; i < osobniki.Count; i++)
+                //{
+                //    for (int j = 0; j < liczbaParametrow; j++)
+                //    {
+                //        var cb = new List<int>();
+                //        for (int k = 0; k < liczbaLbnp; k++)
+                //        {
+                //            cb.Add(osobniki[i].Chromosomy[counter]);
+                //            counter++;
+                //        }
+                //        osobniki[i].Parametry.Add(DekodujParametry(cb, -1, 2, liczbaLbnp));
+                //    }
+                //    counter = 0;
+                //}
 
                 //Wypisanie Osobników z parametrami
 
+                WypiszOsobnikiZParametrami(osobniki);
+
+                //Liczenie funkcji przystosowania
+
                 for (int i = 0; i < osobniki.Count; i++)
                 {
-                    Console.WriteLine($"Osobnik {i+1}");
-                    Console.WriteLine("");
-                    for (int j = 0; j < osobniki[i].Parametry.Count; j++)
-                    {
-                        Console.WriteLine($"Parametr {j+1}");
-                        Console.WriteLine(osobniki[i].Parametry[j]);
-                    }
-                    Console.WriteLine("----------------------");
+                    osobniki[i].WartoscFunkcjiPrzystosowania =
+                        PoliczFunkcjePrzystosowania(osobniki[i].Parametry[0], osobniki[i].Parametry[1]);
                 }
+
+                //Wypisanie wszystkich wartosci funkcji przystosowania
+
+                WypiszFunkcjePrzystosowania(osobniki);
+
+                //Wypisanie funkcji przystosowania najlepszej i sredniej wartosci tych funkcji
+                //algorytm genetyczny
+                WypiszFunkcjePrzystosowaniaNajlepszegoOsobnikaMax(osobniki);
+                WypiszSredniaFunkcjiPrzystosowania(osobniki);
+
+                Console.WriteLine("-----------");
+                var nowaPopulacja = new List<Osobnik>();
+                for (int i = 0; i < liczbaIteracji; i++)
+                {
+                   nowaPopulacja = OperatorSelekcjiTurniejowej(osobniki, rozmiarTurnieju, "Max");
+
+                   for (int j = 0; j < nowaPopulacja.Count; j++)
+                   {
+                       //operator mutacji
+                       nowaPopulacja[j].Chromosomy = OperatorMutacjiJednopunktowej(nowaPopulacja[j].Chromosomy, nowaPopulacja[j].Chromosomy.Count);
+                   }
+
+                    // Operator Hot Deck
+
+                    var najlepszyZeStarejPuli = OperatorHotDeck(osobniki);
+
+                    nowaPopulacja.Add(najlepszyZeStarejPuli);
+
+                    //Dekodowanie i nowa funkcja przystosowania
+
+                    TworzParametry(nowaPopulacja, liczbaParametrow, 0, 100, liczbaLbnp);
+                    for (int j = 0; j < nowaPopulacja.Count; j++)
+                    {
+                        nowaPopulacja[j].WartoscFunkcjiPrzystosowania =
+                            PoliczFunkcjePrzystosowania(nowaPopulacja[j].Parametry[0], nowaPopulacja[j].Parametry[1]);
+                    }
+
+                    //Wypisanie najlepszej i sredniej wartosci funkcji
+
+                    WypiszFunkcjePrzystosowaniaNajlepszegoOsobnikaMax(nowaPopulacja);
+                    Console.WriteLine();
+                    WypiszSredniaFunkcjiPrzystosowania(nowaPopulacja);
+                    Console.WriteLine();
+
+
+                    // zastap stara pule osobnikow nowa pula
+
+                    var counter = 0;
+                    foreach (Osobnik osobnik in nowaPopulacja)
+                    {
+                        osobniki[counter] = osobnik;
+                        counter++;
+                    }
+                    
+                    //Wyczyść zmienną nowaPopulacja
+
+                    nowaPopulacja.Clear(); // czyści listę (Count)
+                    nowaPopulacja.TrimExcess(); //czyści listę (Capacity)
+                    //Console.WriteLine($"wykonano juz razy {i+1}");
+                    //Console.WriteLine();
+                }
+
+                var najlepszyOsobnik = OperatorHotDeck(osobniki);
+
+                Console.WriteLine(najlepszyOsobnik);
 
             }
             else if (currentProgram == "2")
@@ -133,7 +183,6 @@ namespace Zad4MIW
             {
                 Console.WriteLine("Nic nie wybrano.");
             }
-
 
             /*
              klasa osobnik sklada sie z paru rzeczy (na poczatek tworzy sie z parametrow, potem dekoduje zeby zamienic z binarki na double)
@@ -164,29 +213,96 @@ namespace Zad4MIW
 
                 Console.WriteLine("---------------");
             }
-
-            //Console.WriteLine("-------------");
-
-            //for (int i = 0; i < osobniki.Count; i++)
-            //{
-            //    for (int j = 0; j < osobniki[i].Parametry.Count; j++)
-            //    {
-            //        Console.WriteLine($"Parametr {j}");
-            //        for (int k = 0; k < osobniki[i].Parametry[j].chromosomy.Count; k++)
-            //        {
-            //            Console.WriteLine(osobniki[i].Parametry[j].chromosomy[k]);
-
-            //        }
-            //    }
-            //    Console.WriteLine("-------------");
-
-            //}
         }
 
-        //public class Parametr
-        //{
-        //    public List<int> chromosomy = new List<int>();
-        //}
+        public static void WypiszOsobnikiZParametrami(List<Osobnik> osobniki)
+        {
+            for (int i = 0; i < osobniki.Count; i++)
+            {
+                Console.WriteLine($"Osobnik {i + 1}");
+                Console.WriteLine("");
+                for (int j = 0; j < osobniki[i].Parametry.Count; j++)
+                {
+                    Console.WriteLine($"Parametr {j + 1}");
+                    Console.WriteLine(osobniki[i].Parametry[j]);
+                }
+                Console.WriteLine("----------------------");
+            }
+        }
+
+        public static void WypiszFunkcjePrzystosowania(List<Osobnik> osobniki)
+        {
+            for (int i = 0; i < osobniki.Count; i++)
+            {
+                Console.WriteLine($"Osobnik {i + 1}");
+                Console.WriteLine($"wartosc funkcji przystosowania: {osobniki[i].WartoscFunkcjiPrzystosowania}");
+                Console.WriteLine("");
+            }
+        }
+
+        public static void WypiszFunkcjePrzystosowaniaNajlepszegoOsobnikaMax(List<Osobnik> osobniki)
+        {
+            List<double> result = new List<double>();
+            for (int i = 0; i < osobniki.Count; i++)
+            {
+                result.Add(osobniki[i].WartoscFunkcjiPrzystosowania);
+            }
+
+            Console.WriteLine("Najlepsza wartosc funkcji przystosowania:");
+            Console.WriteLine(result.Max());
+        }
+
+        public static void WypiszFunkcjePrzystosowaniaNajlepszegoOsobnikaMin(List<Osobnik> osobniki)
+        {
+            List<double> result = new List<double>();
+            for (int i = 0; i < osobniki.Count; i++)
+            {
+                result.Add(osobniki[i].WartoscFunkcjiPrzystosowania);
+            }
+
+            Console.WriteLine("Najlepsza wartosc funkcji przystosowania:");
+            Console.WriteLine(result.Min());
+        }
+
+        public static void WypiszSredniaFunkcjiPrzystosowania(List<Osobnik> osobniki)
+        {
+            List<double> result = new List<double>();
+            for (int i = 0; i < osobniki.Count; i++)
+            {
+                result.Add(osobniki[i].WartoscFunkcjiPrzystosowania);
+            }
+
+            Console.WriteLine("Srednia wartosc funkcji przystosowania:");
+            Console.WriteLine(result.Average());
+        }
+
+        public static void TworzParametry(List<Osobnik> osobniki, int liczbaParametrow, int zdMin, int zdMax, int liczbaLbnp)
+        {
+            var counter = 0;
+            for (int i = 0; i < osobniki.Count; i++)
+            {
+                for (int j = 0; j < liczbaParametrow; j++)
+                {
+                    var cb = new List<int>();
+                    for (int k = 0; k < liczbaLbnp; k++)
+                    {
+                        cb.Add(osobniki[i].Chromosomy[counter]);
+                        counter++;
+                    }
+
+                    if (osobniki[i].Parametry.Count == liczbaParametrow)
+                    {
+                        osobniki[i].Parametry[j] = DekodujParametry(cb, zdMin, zdMax, liczbaLbnp);
+                    }
+                    else
+                    {
+                        osobniki[i].Parametry.Add(DekodujParametry(cb, zdMin, zdMax, liczbaLbnp));
+                    }
+                }
+                counter = 0;
+            }
+        }
+
         public static double DekodujParametry(List<int> cb, int zdMin, int zdMax, int lbnp)
         {
             int zd = zdMax - zdMin;
@@ -203,12 +319,104 @@ namespace Zad4MIW
 
             return parametr;
         }
+
+        public static double PoliczFunkcjePrzystosowania(double x1, double x2)
+        {
+            var result = Math.Sin(x1 * 0.05) + Math.Sin(x2 * 0.05) + 0.4 * Math.Sin(x1 * 0.15) * Math.Sin(x2 * 0.15);
+
+            return result;
+        }
+
+        public static List<Osobnik> OperatorSelekcjiTurniejowej(List<Osobnik> osobniki, int RozmiarTurnieju, string maxCzyMin)
+        {
+            var random = new Random();
+            var wybrany = osobniki[0];
+            var nowaPula = new List<Osobnik>();
+
+            for (int i = 0; i < osobniki.Count-1; i++)
+            {
+                var turniej = new List<Osobnik>();
+
+                var counter = 0;
+                while (counter < RozmiarTurnieju)
+                {
+                    int losowyIndex = random.Next(osobniki.Count);
+                    if (turniej.Select(x=>x.Id).Contains(osobniki[losowyIndex].Id))
+                    {
+                        continue;
+                    }
+                    turniej.Add(osobniki[losowyIndex]);
+                    counter++;
+                }
+
+                double max = 0;
+                double min = 9999999999;
+                if (maxCzyMin == "Max")
+                {
+                    foreach (var osobnik in turniej)
+                    {
+                        if (osobnik.WartoscFunkcjiPrzystosowania > max)
+                        {
+                            max = osobnik.WartoscFunkcjiPrzystosowania;
+                            wybrany = new Osobnik(osobnik);
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (var osobnik in turniej)
+                    {
+                        if (osobnik.WartoscFunkcjiPrzystosowania < min)
+                        {
+                            min = osobnik.WartoscFunkcjiPrzystosowania;
+                            wybrany = new Osobnik(osobnik);
+                        }
+                    }
+                }
+                nowaPula.Add(wybrany);
+            }
+
+            return nowaPula;
+        }
+
+        public static List<int> OperatorMutacjiJednopunktowej(List<int> cb, int lBnCh)
+        {
+            var result = cb;
+            var random = new Random();
+            var b_punkt = random.Next(cb.Count);
+
+            if (result[b_punkt] == 0)
+            {
+                result[b_punkt] = 1;
+            }
+            else
+            {
+                result[b_punkt] = 0;
+            }
+
+            return result;
+        }
+
+        public static Osobnik OperatorHotDeck(List<Osobnik> osobniki)
+        {
+            var indexNajlepszego = 0;
+            for (int j = 0; j < osobniki.Count; j++)
+            {
+                if (osobniki[j].WartoscFunkcjiPrzystosowania > osobniki[indexNajlepszego].WartoscFunkcjiPrzystosowania)
+                {
+                    indexNajlepszego = j;
+                }
+            }
+
+            return osobniki[indexNajlepszego];
+        }
+
         public class Osobnik
         {
             private readonly Random _random = new Random();
 
+            public Guid Id;
             public List<int> Chromosomy = new List<int>();
-            //public List<Parametr> Parametry =  new List<Parametr>();
             public List<double> Parametry = new List<double>();
             public int liczbaChromosomow;
             public int liczbaParametrow;
@@ -217,6 +425,7 @@ namespace Zad4MIW
 
             public Osobnik(int Lbnp, int liczbaParametrow)
             {
+                this.Id = Guid.NewGuid();
                 this.Lbnp = Lbnp;
                 this.liczbaParametrow = liczbaParametrow;
                 this.liczbaChromosomow = liczbaParametrow * Lbnp;
@@ -224,24 +433,23 @@ namespace Zad4MIW
                 {
                     this.Chromosomy.Add(_random.Next(2));
                 }
-
-                //for (int i = 0; i < liczbaParametrow; i++)
-                //{
-                //    var parametr = new Parametr();
-                //    for (int j = 0; j < liczbaChromosomow; j++)
-                //    {
-                //        parametr.chromosomy.Add(Chromosomy[j]);
-                //        if (parametr.chromosomy.Count == Lbnp)
-                //        {
-                //            Parametry.Add(parametr);
-                //            break;
-                //        }
-                //    }
-                //    Parametry.Add(parametr);
-                //}
-
             }
 
+            public Osobnik(Osobnik nowyOsobnik)
+            {
+                this.Id = Guid.NewGuid();
+                this.Chromosomy = new List<int>(nowyOsobnik.Chromosomy);
+                this.Parametry = new List<double>(nowyOsobnik.Parametry);
+                this.liczbaChromosomow = nowyOsobnik.liczbaChromosomow;
+                this.liczbaParametrow = nowyOsobnik.liczbaParametrow;
+                this.Lbnp = nowyOsobnik.Lbnp;
+                this.WartoscFunkcjiPrzystosowania = nowyOsobnik.WartoscFunkcjiPrzystosowania;
+            }
+
+            public override string ToString()
+            {
+                return $"Najlepszy Osobnik: {this.Id}\n Parametry: {string.Join(" ",this.Parametry)}\n Wartosc Funkcji Przystosowania: {this.WartoscFunkcjiPrzystosowania}"; //Pomaga wyświetlić koncowy wynik
+            }
         }
        
     }
