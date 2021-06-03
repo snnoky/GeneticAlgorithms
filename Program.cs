@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Runtime.Intrinsics.Arm;
@@ -64,6 +65,8 @@ namespace Zad4MIW
                     rozmiarTurnieju = 2;
                 }
                 
+                //tworzenie osobnikow
+
                 for (int i = 0; i < liczbaOsobnikow; i++)
                 {
                     Osobnik os = new Osobnik(liczbaLbnp,liczbaParametrow);
@@ -75,7 +78,7 @@ namespace Zad4MIW
                 //Tworzenie parametrów
 
 
-                TworzParametry(osobniki,liczbaParametrow,-1,2,liczbaLbnp);
+                TworzParametry(osobniki,liczbaParametrow,0,100,liczbaLbnp);
 
                 //var counter = 0;
                 //for (int i = 0; i < osobniki.Count; i++)
@@ -102,7 +105,7 @@ namespace Zad4MIW
                 for (int i = 0; i < osobniki.Count; i++)
                 {
                     osobniki[i].WartoscFunkcjiPrzystosowania =
-                        PoliczFunkcjePrzystosowania(osobniki[i].Parametry[0], osobniki[i].Parametry[1]);
+                        PoliczFunkcjePrzystosowaniaZad1(osobniki[i].Parametry[0], osobniki[i].Parametry[1]);
                 }
 
                 //Wypisanie wszystkich wartosci funkcji przystosowania
@@ -128,7 +131,7 @@ namespace Zad4MIW
 
                     // Operator Hot Deck
 
-                    var najlepszyZeStarejPuli = OperatorHotDeck(osobniki);
+                    var najlepszyZeStarejPuli = OperatorHotDeck(osobniki, "Max");
 
                     nowaPopulacja.Add(najlepszyZeStarejPuli);
 
@@ -138,7 +141,7 @@ namespace Zad4MIW
                     for (int j = 0; j < nowaPopulacja.Count; j++)
                     {
                         nowaPopulacja[j].WartoscFunkcjiPrzystosowania =
-                            PoliczFunkcjePrzystosowania(nowaPopulacja[j].Parametry[0], nowaPopulacja[j].Parametry[1]);
+                            PoliczFunkcjePrzystosowaniaZad1(nowaPopulacja[j].Parametry[0], nowaPopulacja[j].Parametry[1]);
                     }
 
                     //Wypisanie najlepszej i sredniej wartosci funkcji
@@ -166,13 +169,155 @@ namespace Zad4MIW
                     //Console.WriteLine();
                 }
 
-                var najlepszyOsobnik = OperatorHotDeck(osobniki);
+                var najlepszyOsobnik = OperatorHotDeck(osobniki, "Max");
 
                 Console.WriteLine(najlepszyOsobnik);
 
             }
             else if (currentProgram == "2")
             {
+                var liczbaParametrow = 3;
+                var liczbaLbnp = 4;
+                var liczbaIteracji = 100;
+                var liczbaOsobnikow = 13;
+                var rozmiarTurnieju = 3;
+                var osobniki = new List<Osobnik>();
+
+
+
+                //otwieranie pliku sinusik.txt
+                //pobieranie wartosci z sinusik.txt
+                //wyliczenie linii w sinusik.txt
+                var filePath = "../../../sinusik.txt";
+                var fileLinesCount = 0;
+                string[] fileItems = new string[] { };
+                List<double> xItems = new List<double>();
+                List<double> yItems = new List<double>();
+
+                if (!File.Exists(filePath))
+                {
+                    Console.WriteLine("Nie ma takiego pliku!");
+                }
+                else
+                {
+                    fileLinesCount = File.ReadAllLines(filePath).Length;
+                    fileItems = File.ReadAllLines(filePath);
+                }
+
+
+                foreach (string fileItem in fileItems)
+                {
+                    
+                    xItems.Add(Convert.ToDouble(fileItem.Split(" ")[0]));
+                    yItems.Add(Convert.ToDouble(fileItem.Split(" ")[1]));
+                }
+
+                //Console.WriteLine("Podaj liczbe parametrow:");
+                //liczbaParametrow = Convert.ToInt32(Console.ReadLine());
+
+                Console.WriteLine("Podaj liczbe bitow na parametr: minimum 4");
+                liczbaLbnp = Convert.ToInt32(Console.ReadLine());
+                if (liczbaLbnp < 4)
+                {
+                    Console.WriteLine("Poniżej min użyte zostanie min=4");
+                    liczbaLbnp = 4;
+                }
+
+                Console.WriteLine("Podaj liczbe iteracji");
+                liczbaIteracji = Convert.ToInt32(Console.ReadLine());
+                if (liczbaIteracji < 100)
+                {
+                    Console.WriteLine("Poniżej min użyte zostanie min=100");
+                    liczbaIteracji = 100;
+                }
+
+                //tworzenie osobnikow
+
+                for (int i = 0; i < liczbaOsobnikow; i++)
+                {
+                    Osobnik os = new Osobnik(liczbaLbnp, liczbaParametrow);
+                    osobniki.Add(os);
+                }
+
+                //Tworzenie parametrów
+
+
+                TworzParametry(osobniki, liczbaParametrow, 0, 3, liczbaLbnp);
+
+                //Liczenie funkcji przystosowania
+
+                for (int i = 0; i < osobniki.Count; i++)
+                {
+                    osobniki[i].WartoscFunkcjiPrzystosowania =
+                        PoliczFunkcjePrzystosowaniaZad2(osobniki[i].Parametry[0], osobniki[i].Parametry[1], osobniki[i].Parametry[2], xItems, yItems, fileLinesCount);
+                }
+
+                //Wypisanie funkcji przystosowanie najlepszego osobnika i średniej przed iteracjami
+                Console.WriteLine("Przed:");
+                WypiszFunkcjePrzystosowaniaNajlepszegoOsobnikaMin(osobniki);
+                WypiszSredniaFunkcjiPrzystosowania(osobniki);
+                Console.WriteLine("-----------------");
+                //Iteracje Algorytmu
+
+                var nowaPopulacja = new List<Osobnik>();
+                for (int i = 0; i < liczbaIteracji; i++)
+                {
+                    //Selekcja turniejowa
+                    nowaPopulacja = OperatorSelekcjiTurniejowej(osobniki, rozmiarTurnieju, "Min");
+
+                    //operator krzyzowania na nowej puli
+                    OperatorKrzyzowania(nowaPopulacja, liczbaLbnp,0,1); // Pierwsze dwa osobniki
+                    OperatorKrzyzowania(nowaPopulacja, liczbaLbnp, 2, 3); // trzeci i czwarty osobnik
+                    OperatorKrzyzowania(nowaPopulacja, liczbaLbnp, 8, 9); // dziewiąty i dziesiąty
+                    OperatorKrzyzowania(nowaPopulacja, liczbaLbnp, nowaPopulacja.Count-2, nowaPopulacja.Count-1); // ostatnie dwa
+
+                    //operator mutacji jednopunktowej od 5 do ostatniego osobnika
+                    for (int j = 4; j < nowaPopulacja.Count; j++)
+                    {
+                        nowaPopulacja[j].Chromosomy = OperatorMutacjiJednopunktowej(nowaPopulacja[j].Chromosomy, nowaPopulacja[j].Chromosomy.Count);
+                    }
+
+                    // Operator Hot Deck
+
+                    var najlepszyZeStarejPuli = OperatorHotDeck(osobniki, "Min");
+
+                    nowaPopulacja.Add(najlepszyZeStarejPuli);
+
+                    //Dekodowanie i nowa funkcja przystosowania
+
+                    TworzParametry(nowaPopulacja, liczbaParametrow, 0, 3, liczbaLbnp);
+                    for (int j = 0; j < nowaPopulacja.Count; j++)
+                    {
+                        nowaPopulacja[j].WartoscFunkcjiPrzystosowania =
+                            PoliczFunkcjePrzystosowaniaZad2(nowaPopulacja[j].Parametry[0], nowaPopulacja[j].Parametry[1], nowaPopulacja[j].Parametry[2], xItems, yItems, fileLinesCount);
+                    }
+
+                    //Wypisanie funkcji przystosowanie najlepszego osobnika i średniej
+                    Console.WriteLine();
+                    Console.WriteLine($"Iteracja {i+1}");
+                    WypiszFunkcjePrzystosowaniaNajlepszegoOsobnikaMin(nowaPopulacja);
+                    WypiszSredniaFunkcjiPrzystosowania(nowaPopulacja);
+
+                    // zastap stara pule osobnikow nowa pula
+
+                    var counter = 0;
+                    foreach (Osobnik osobnik in nowaPopulacja)
+                    {
+                        osobniki[counter] = osobnik;
+                        counter++;
+                    }
+
+                    //Wyczyść zmienną nowaPopulacja
+
+                    nowaPopulacja.Clear(); // czyści listę (Count)
+                    nowaPopulacja.TrimExcess(); //czyści listę (Capacity)
+                    
+                }
+
+                
+                var najlepszyOsobnik = OperatorHotDeck(osobniki, "Min");
+
+                Console.WriteLine(najlepszyOsobnik);
 
             }
             else if (currentProgram == "3")
@@ -199,6 +344,7 @@ namespace Zad4MIW
              zeby sprawdzic wagi podac wartosc xora jezeli wychodzi powyzej 0,9 to dobrze i jak ponizej 0,1 to tez spoko
              zrobic tak zeby praktycznie dawalo 0 albo 1
             */
+            
         }
 
         public static void WypiszOsobniki(List<Osobnik> osobniki)
@@ -320,9 +466,23 @@ namespace Zad4MIW
             return parametr;
         }
 
-        public static double PoliczFunkcjePrzystosowania(double x1, double x2)
+        public static double PoliczFunkcjePrzystosowaniaZad1(double x1, double x2)
         {
             var result = Math.Sin(x1 * 0.05) + Math.Sin(x2 * 0.05) + 0.4 * Math.Sin(x1 * 0.15) * Math.Sin(x2 * 0.15);
+
+            return result;
+        }
+
+        public static double PoliczFunkcjePrzystosowaniaZad2(double pa, double pb, double pc, List<double> x, List<double> y, int lineCount )
+        {
+
+            double result = 0;
+
+            for (int i = 0; i < lineCount; i++)
+            {
+                var error = pa * Math.Sin(pb * x[i] + pc);
+                result += Math.Pow(y[i] - error, 2);
+            }
 
             return result;
         }
@@ -383,7 +543,7 @@ namespace Zad4MIW
         {
             var result = cb;
             var random = new Random();
-            var b_punkt = random.Next(cb.Count);
+            var b_punkt = random.Next(cb.Count); //Lbnch-1 ??
 
             if (result[b_punkt] == 0)
             {
@@ -397,16 +557,47 @@ namespace Zad4MIW
             return result;
         }
 
-        public static Osobnik OperatorHotDeck(List<Osobnik> osobniki)
+        public static void OperatorKrzyzowania(List<Osobnik> osobniki, int Lbnp, int indexOsobnik1, int indexOsobnik2)
+        {
+            var random = new Random();
+            var temporary = new List<int>();
+            var b_ciecie = random.Next(osobniki[indexOsobnik1].liczbaChromosomow-1);
+            var counter = 0;
+            for (int j = b_ciecie+1; j < osobniki[indexOsobnik1].liczbaChromosomow; j++) //czy powinno być do LBNP -1 czy tak jak jest?
+            {
+                temporary.Add(osobniki[indexOsobnik1].Chromosomy[j]);
+                osobniki[indexOsobnik1].Chromosomy[j] = osobniki[indexOsobnik2].Chromosomy[j];
+                osobniki[indexOsobnik2].Chromosomy[j] = temporary[counter];
+                counter++;
+            }
+
+            
+        }
+
+        public static Osobnik OperatorHotDeck(List<Osobnik> osobniki, string MinCzyMax)
         {
             var indexNajlepszego = 0;
-            for (int j = 0; j < osobniki.Count; j++)
+            if (MinCzyMax == "Max")
             {
-                if (osobniki[j].WartoscFunkcjiPrzystosowania > osobniki[indexNajlepszego].WartoscFunkcjiPrzystosowania)
+                for (int j = 0; j < osobniki.Count; j++)
                 {
-                    indexNajlepszego = j;
+                    if (osobniki[j].WartoscFunkcjiPrzystosowania > osobniki[indexNajlepszego].WartoscFunkcjiPrzystosowania)
+                    {
+                        indexNajlepszego = j;
+                    }
                 }
             }
+            else
+            {
+                for (int j = 0; j < osobniki.Count; j++)
+                {
+                    if (osobniki[j].WartoscFunkcjiPrzystosowania < osobniki[indexNajlepszego].WartoscFunkcjiPrzystosowania)
+                    {
+                        indexNajlepszego = j;
+                    }
+                }
+            }
+            
 
             return osobniki[indexNajlepszego];
         }
