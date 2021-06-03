@@ -322,7 +322,117 @@ namespace Zad4MIW
             }
             else if (currentProgram == "3")
             {
+                var liczbaParametrow = 9; //3*3(3neurony, 3 wagi na neuron)
+                var liczbaLbnp = 4; // takie jak w poprzednim zadaniu
+                var liczbaIteracji = 100;// takie jak w poprzednim zadaniu
+                var liczbaOsobnikow = 13;// takie jak w poprzednim zadaniu
+                var rozmiarTurnieju = 3;// takie jak w poprzednim zadaniu
+                var osobniki = new List<Osobnik>();
 
+
+                Console.WriteLine("Podaj liczbe bitow na parametr: minimum 4");
+                liczbaLbnp = Convert.ToInt32(Console.ReadLine());
+                if (liczbaLbnp < 4)
+                {
+                    Console.WriteLine("Poniżej min użyte zostanie min=4");
+                    liczbaLbnp = 4;
+                }
+
+                Console.WriteLine("Podaj liczbe iteracji");
+                liczbaIteracji = Convert.ToInt32(Console.ReadLine());
+                if (liczbaIteracji < 100)
+                {
+                    Console.WriteLine("Poniżej min użyte zostanie min=100");
+                    liczbaIteracji = 100;
+                }
+
+                //tworzenie osobnikow
+
+                for (int i = 0; i < liczbaOsobnikow; i++)
+                {
+                    Osobnik os = new Osobnik(liczbaLbnp, liczbaParametrow);
+                    osobniki.Add(os);
+                }
+
+                //Tworzenie parametrów
+
+
+                TworzParametry(osobniki, liczbaParametrow, -10, 10, liczbaLbnp);
+
+
+                //Liczenie funkcji przystosowania
+
+                for (int i = 0; i < osobniki.Count; i++)
+                {
+                    osobniki[i].WartoscFunkcjiPrzystosowania =
+                        PoliczFunkcjePrzystosowaniaZad3(osobniki, i);
+                }
+
+                //Wypisanie funkcji przystosowanie najlepszego osobnika i średniej przed iteracjami
+                Console.WriteLine("Przed:");
+                WypiszFunkcjePrzystosowaniaNajlepszegoOsobnikaMin(osobniki);
+                WypiszSredniaFunkcjiPrzystosowania(osobniki);
+                Console.WriteLine("-----------------");
+                //Iteracje Algorytmu
+
+                var nowaPopulacja = new List<Osobnik>();
+                for (int i = 0; i < liczbaIteracji; i++)
+                {
+                    //Selekcja turniejowa
+                    nowaPopulacja = OperatorSelekcjiTurniejowej(osobniki, rozmiarTurnieju, "Min");
+
+                    //operator krzyzowania na nowej puli
+                    OperatorKrzyzowania(nowaPopulacja, liczbaLbnp, 0, 1); // Pierwsze dwa osobniki
+                    OperatorKrzyzowania(nowaPopulacja, liczbaLbnp, 2, 3); // trzeci i czwarty osobnik
+                    OperatorKrzyzowania(nowaPopulacja, liczbaLbnp, 8, 9); // dziewiąty i dziesiąty
+                    OperatorKrzyzowania(nowaPopulacja, liczbaLbnp, nowaPopulacja.Count - 2, nowaPopulacja.Count - 1); // ostatnie dwa
+
+                    //operator mutacji jednopunktowej od 5 do ostatniego osobnika
+                    for (int j = 4; j < nowaPopulacja.Count; j++)
+                    {
+                        nowaPopulacja[j].Chromosomy = OperatorMutacjiJednopunktowej(nowaPopulacja[j].Chromosomy, nowaPopulacja[j].Chromosomy.Count);
+                    }
+
+                    // Operator Hot Deck
+
+                    var najlepszyZeStarejPuli = OperatorHotDeck(osobniki, "Min");
+
+                    nowaPopulacja.Add(najlepszyZeStarejPuli);
+
+                    //Dekodowanie i nowa funkcja przystosowania
+
+                    TworzParametry(nowaPopulacja, liczbaParametrow, -10, 10, liczbaLbnp);
+                    for (int j = 0; j < nowaPopulacja.Count; j++)
+                    {
+                        nowaPopulacja[j].WartoscFunkcjiPrzystosowania =
+                            PoliczFunkcjePrzystosowaniaZad3(nowaPopulacja, j);
+                    }
+
+                    //Wypisanie funkcji przystosowanie najlepszego osobnika i średniej
+                    Console.WriteLine();
+                    Console.WriteLine($"Iteracja {i + 1}");
+                    WypiszFunkcjePrzystosowaniaNajlepszegoOsobnikaMin(nowaPopulacja);
+                    WypiszSredniaFunkcjiPrzystosowania(nowaPopulacja);
+
+                    // zastap stara pule osobnikow nowa pula
+
+                    var counter = 0;
+                    foreach (Osobnik osobnik in nowaPopulacja)
+                    {
+                        osobniki[counter] = osobnik;
+                        counter++;
+                    }
+
+                    //Wyczyść zmienną nowaPopulacja
+
+                    nowaPopulacja.Clear(); // czyści listę (Count)
+                    nowaPopulacja.TrimExcess(); //czyści listę (Capacity)
+
+                }
+
+                var najlepszyOsobnik = OperatorHotDeck(osobniki, "Min");
+
+                Console.WriteLine(najlepszyOsobnik);
             }
             else
             {
@@ -486,6 +596,103 @@ namespace Zad4MIW
 
             return result;
         }
+
+        public static double PoliczFunkcjePrzystosowaniaZad3(List<Osobnik> osobniki, int ktoryOsobnik)
+        {
+            double result = 0;
+
+            double xor0 = 0;
+            double xor1 = 1;
+
+
+            double d1 = 0;
+            double d2 = 1;
+            double d3 = 1;
+            double d4 = 0;
+
+            double s1 = 0;
+            double s2 = 0;
+            double s3 = 0;
+
+            double s4 = 0;
+            double s5 = 0;
+            double s6 = 0;
+
+            double s7 = 0;
+            double s8 = 0;
+            double s9 = 0;
+
+            double s10 = 0;
+            double s11 = 0;
+            double s12 = 0;
+
+            double wynik1 = 0;
+            double wynik2 = 0;
+            double wynik3 = 0;
+            double wynik4 = 0;
+
+            double wyjscie1 = 0;
+            double wyjscie2 = 0;
+            double wyjscie3 = 0;
+
+            double wyjscie4 = 0;
+            double wyjscie5 = 0;
+            double wyjscie6 = 0;
+
+            double wyjscie7 = 0;
+            double wyjscie8 = 0;
+            double wyjscie9 = 0;
+
+            double wyjscie10 = 0;
+            double wyjscie11 = 0;
+            double wyjscie12 = 0;
+
+            //00
+            s1 = osobniki[ktoryOsobnik].Parametry[0] + osobniki[ktoryOsobnik].Parametry[1] * xor0 + osobniki[ktoryOsobnik].Parametry[2] * xor0;
+            s2 = osobniki[ktoryOsobnik].Parametry[3] + osobniki[ktoryOsobnik].Parametry[4] * xor0 + osobniki[ktoryOsobnik].Parametry[5] * xor0;
+            wyjscie1 = 1 / (1 + Math.Pow(Math.E, -1 * s1));
+            wyjscie2 = 1 / (1 + Math.Pow(Math.E, -1 * s2));
+            s3 = osobniki[ktoryOsobnik].Parametry[6] + osobniki[ktoryOsobnik].Parametry[7] * wyjscie1 + osobniki[ktoryOsobnik].Parametry[8] * wyjscie2;
+            wyjscie3 = 1 / (1 + Math.Pow(Math.E, -1 * s3));
+
+            //01
+            s4 = osobniki[ktoryOsobnik].Parametry[0] + osobniki[ktoryOsobnik].Parametry[1] * xor0 + osobniki[ktoryOsobnik].Parametry[2] * xor1;
+            s5 = osobniki[ktoryOsobnik].Parametry[3] + osobniki[ktoryOsobnik].Parametry[4] * xor0 + osobniki[ktoryOsobnik].Parametry[5] * xor1;
+            wyjscie4 = 1 / (1 + Math.Pow(Math.E, -1 * s4));
+            wyjscie5 = 1 / (1 + Math.Pow(Math.E, -1 * s5));
+            s6 = osobniki[ktoryOsobnik].Parametry[6] + osobniki[ktoryOsobnik].Parametry[7] * wyjscie4 + osobniki[ktoryOsobnik].Parametry[8] * wyjscie5;
+            wyjscie6 = 1 / (1 + Math.Pow(Math.E, -1 * s6));
+
+            //10
+            s7 = osobniki[ktoryOsobnik].Parametry[0] + osobniki[ktoryOsobnik].Parametry[1] * xor1 + osobniki[ktoryOsobnik].Parametry[2] * xor0;
+            s8 = osobniki[ktoryOsobnik].Parametry[3] + osobniki[ktoryOsobnik].Parametry[4] * xor1 + osobniki[ktoryOsobnik].Parametry[5] * xor0;
+            wyjscie7 = 1 / (1 + Math.Pow(Math.E, -1 * s7));
+            wyjscie8 = 1 / (1 + Math.Pow(Math.E, -1 * s8));
+            s9 = osobniki[ktoryOsobnik].Parametry[6] + osobniki[ktoryOsobnik].Parametry[7] * wyjscie7 + osobniki[ktoryOsobnik].Parametry[8] * wyjscie8;
+            wyjscie9 = 1 / (1 + Math.Pow(Math.E, -1 * s9));
+
+            //11
+            s10 = osobniki[ktoryOsobnik].Parametry[0] + osobniki[ktoryOsobnik].Parametry[1] * xor1 + osobniki[ktoryOsobnik].Parametry[2] * xor1;
+            s11 = osobniki[ktoryOsobnik].Parametry[3] + osobniki[ktoryOsobnik].Parametry[4] * xor1 + osobniki[ktoryOsobnik].Parametry[5] * xor1;
+            wyjscie10 = 1 / (1 + Math.Pow(Math.E, -1 * s10));
+            wyjscie11 = 1 / (1 + Math.Pow(Math.E, -1 * s11));
+            s12 = osobniki[ktoryOsobnik].Parametry[6] + osobniki[ktoryOsobnik].Parametry[7] * wyjscie10 + osobniki[ktoryOsobnik].Parametry[8] * wyjscie11;
+            wyjscie12 = 1 / (1 + Math.Pow(Math.E, -1 * s12));
+
+            wynik1 = d1 - wyjscie3;
+            wynik2 = d2 - wyjscie6;
+            wynik3 = d3 - wyjscie9;
+            wynik4 = d4 - wyjscie12;
+
+
+            result += Math.Pow(wynik1,2);
+            result += Math.Pow(wynik2,2);
+            result += Math.Pow(wynik3,2);
+            result += Math.Pow(wynik4,2);
+
+            return result;
+        }
+
 
         public static List<Osobnik> OperatorSelekcjiTurniejowej(List<Osobnik> osobniki, int RozmiarTurnieju, string maxCzyMin)
         {
