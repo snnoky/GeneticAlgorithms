@@ -438,23 +438,6 @@ namespace Zad4MIW
             {
                 Console.WriteLine("Nic nie wybrano.");
             }
-
-            /*
-             klasa osobnik sklada sie z paru rzeczy (na poczatek tworzy sie z parametrow, potem dekoduje zeby zamienic z binarki na double)
-             klasa parametr z lista int 0 lub 1 o dlugosci z zadania np w config to dac
-             klasa dekodowane parametry z wartoscia double
-             zmienna liczba bitow na parametr mozna dac w petle(ustawic z gory wart minimalna)
-             reszta funkcji
-             operator selekcji turniejowej losuje tak zeby dac roznym szanse
-             organizowac zawody kilka razy
-             wybierac z tych co sa w zawodach
-             wynikiem jest najsilniejszy czyli ten z najwieksza wartoscia funkcji przystosowania
-             robic to tyle ile jest liczba iteracji albo po bledzie czyli jak licze funkcje przystosowania i wychodzi 
-             taka liczba jaka podana w zadaniu (osobnik rowny wartosci przystosowania z zadania)
-             zeby sprawdzic wagi podac wartosc xora jezeli wychodzi powyzej 0,9 to dobrze i jak ponizej 0,1 to tez spoko
-             zrobic tak zeby praktycznie dawalo 0 albo 1
-            */
-            
         }
 
         public static void WypiszOsobniki(List<Osobnik> osobniki)
@@ -604,7 +587,6 @@ namespace Zad4MIW
             double xor0 = 0;
             double xor1 = 1;
 
-
             double d1 = 0;
             double d2 = 1;
             double d3 = 1;
@@ -692,7 +674,6 @@ namespace Zad4MIW
 
             return result;
         }
-
 
         public static List<Osobnik> OperatorSelekcjiTurniejowej(List<Osobnik> osobniki, int RozmiarTurnieju, string maxCzyMin)
         {
